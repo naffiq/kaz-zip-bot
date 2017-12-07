@@ -1,13 +1,13 @@
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
-import urllib
+import utils
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-import requests
+from telegram import ParseMode
 
 updater = Updater(token = os.environ.get("BOT_TOKEN"))
 
@@ -24,25 +24,26 @@ def start(bot, update):
 start_handler = CommandHandler('start', start)
 dispatcher.add_handler(start_handler)
 
-def get_zip_code(address):
-    encoded_address = urllib.parse.quote_plus(address.replace("/", " "))
-    r = requests.get("https://api.post.kz/api/byAddress/%s?from=0" % encoded_address)
-    rJson = r.json()
-
-    code = rJson['data'][0]['postcode']
-    oldCode = rJson['data'][0]['fullAddress']['oldPostcode']
-    address_rus = rJson['data'][0]['addressRus']
-    return (address_rus, code, oldCode)
 
 def address(bot, update):
     address_text = update.message.text
-    answer = "Адрес: %s\nПочтовый индекс: %s\nСтарый почтовый индекс: %s" % get_zip_code(address_text)
-
-    print("Question:\n%s\nAnswer:\n%s\n" % (address_text, answer))
+    answer = "*Адрес:* %s\n*Почтовый индекс:* %s\n*Старый почтовый индекс:* %s" % utils.get_zip_code(address_text)
     
-    bot.send_message(chat_id=update.message.chat_id, text=answer)
+    bot.send_message(chat_id=update.message.chat_id, 
+                     text=answer, 
+                     parse_mode=ParseMode.MARKDOWN)
 
 address_handler = MessageHandler(Filters.text, address)
 dispatcher.add_handler(address_handler)
+
+def about(bot, update):
+    bot.send_message(chat_id=update.message.chat_id,
+                     text="""
+Я был создан @naffiq в свободное от работы время. Мои исходники можно посмотреть тут: 
+https://github.com/naffiq/kaz-zip-bot
+""")
+
+start_handler = CommandHandler('about', about)
+dispatcher.add_handler(start_handler)
 
 updater.start_polling()
