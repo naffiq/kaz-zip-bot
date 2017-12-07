@@ -10,4 +10,3 @@ def get_zip_code(address):
     oldCode = rJson['data'][0]['fullAddress']['oldPostcode']
     address_rus = rJson['data'][0]['addressRus']
     return (address_rus, code, oldCode)
-
